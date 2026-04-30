@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chatbot</title>
+</head>
+<body>
+
+<h1>Mi Chatbot</h1>
+
+<input id="input" placeholder="Escribe algo">
+<button onclick="enviar()">Enviar</button>
+
+<p id="respuesta"></p>
+
+<script>
+async function enviar() {
+  const mensaje = document.getElementById("input").value;
+
+  const res = await fetch("http://127.0.0.1:5000/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ message: mensaje })
+  });
+
+  const data = await res.json();
+  document.getElementById("respuesta").innerText = data.reply;
+}
+</script>
+
+</body>
+</html>
