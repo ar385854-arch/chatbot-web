@@ -1,22 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Chatbot</title>
+  <meta charset="UTF-8">
+  <title>Restaurante Cortijo Blanco</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f1ec;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat {
+      width: 420px;
+      height: 620px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      background: #8b3a1d;
+      color: white;
+      padding: 18px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      background: #faf7f2;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      margin-bottom: 10px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    .user {
+      background: #d9fdd3;
+      margin-left: auto;
+    }
+
+    .bot {
+      background: white;
+      border: 1px solid #eee;
+      margin-right: auto;
+    }
+
+    .input-area {
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+
+    input {
+      flex: 1;
+      border: none;
+      padding: 16px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    button {
+      border: none;
+      background: #8b3a1d;
+      color: white;
+      padding: 0 22px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #6f2e17;
+    }
+  </style>
 </head>
 <body>
 
-<h1>Mi Chatbot</h1>
+  <div class="chat">
+    <div class="header">Restaurante Cortijo Blanco</div>
 
-<input id="input" placeholder="Escribe algo">
-<button onclick="enviar()">Enviar</button>
+    <div class="messages" id="messages">
+      <div class="message bot">
+        Hola 👋 Soy el asistente virtual de Restaurante Cortijo Blanco. Puedo ayudarte con reservas, ubicación y dudas generales.
+      </div>
+    </div>
 
-<p id="respuesta"></p>
+    <div class="input-area">
+      <input id="input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter') enviar()">
+      <button onclick="enviar()">Enviar</button>
+    </div>
+  </div>
 
 <script>
 async function enviar() {
-  const mensaje = document.getElementById("input").value;
+  const input = document.getElementById("input");
+  const messages = document.getElementById("messages");
+  const mensaje = input.value.trim();
 
-  const res = await fetch("http://127.0.0.1:5000/chat", {
+  if (!mensaje) return;
+
+  messages.innerHTML += `<div class="message user">${mensaje}</div>`;
+  input.value = "";
+  messages.scrollTop = messages.scrollHeight;
+
+  messages.innerHTML += `<div class="message bot" id="loading">Escribiendo...</div>`;
+  messages.scrollTop = messages.scrollHeight;
+
+  const res = await fetch("/chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -25,7 +129,10 @@ async function enviar() {
   });
 
   const data = await res.json();
-  document.getElementById("respuesta").innerText = data.reply;
+
+  document.getElementById("loading").remove();
+  messages.innerHTML += `<div class="message bot">${data.reply}</div>`;
+  messages.scrollTop = messages.scrollHeight;
 }
 </script>
 
