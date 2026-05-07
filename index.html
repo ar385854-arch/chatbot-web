@@ -2,12 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Asistente de reservas</title>
+  <title>Asistente de citas</title>
+
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f1ec;
+      background: #f3f5f7;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -16,17 +17,17 @@
 
     .chat {
       width: 420px;
-      height: 620px;
+      height: 650px;
       background: white;
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      border-radius: 20px;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     }
 
     .header {
-      background: #8b3a1d;
+      background: #4c6ef5;
       color: white;
       padding: 18px;
       text-align: center;
@@ -36,28 +37,28 @@
 
     .messages {
       flex: 1;
-      padding: 16px;
+      padding: 15px;
       overflow-y: auto;
-      background: #faf7f2;
+      background: #f8f9fa;
     }
 
     .message {
       max-width: 80%;
-      padding: 10px 14px;
+      padding: 12px 14px;
       border-radius: 14px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       line-height: 1.4;
       white-space: pre-wrap;
     }
 
     .user {
-      background: #d9fdd3;
+      background: #dbe4ff;
       margin-left: auto;
     }
 
     .bot {
       background: white;
-      border: 1px solid #eee;
+      border: 1px solid #e9ecef;
       margin-right: auto;
     }
 
@@ -76,7 +77,7 @@
 
     button {
       border: none;
-      background: #8b3a1d;
+      background: #4c6ef5;
       color: white;
       padding: 0 22px;
       font-size: 15px;
@@ -84,57 +85,87 @@
     }
 
     button:hover {
-      background: #6f2e17;
+      background: #3b5bdb;
     }
   </style>
 </head>
+
 <body>
 
-  <div class="chat">
-    <div class="header">Asistente de reservas para restaurantes</div>
+<div class="chat">
 
-    <div class="messages" id="messages">
-      <div class="message bot">
-        Hola 👋 Soy un asistente de reservas para restaurantes. 
-        Puedo ayudarte con reservas, ubicación y dudas generales.
-      </div>
-    </div>
-
-    <div class="input-area">
-      <input id="input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter') enviar()">
-      <button onclick="enviar()">Enviar</button>
-    </div>
+  <div class="header">
+    Asistente de citas para consultas
   </div>
 
+  <div class="messages" id="messages">
+
+    <div class="message bot">
+      Hola 👋  
+      Soy un asistente automático para gestionar citas de consultas y profesionales.  
+      
+      Puedo ayudarte a solicitar una cita o resolver dudas básicas.
+    </div>
+
+  </div>
+
+  <div class="input-area">
+    <input 
+      id="input" 
+      placeholder="Escribe tu mensaje..."
+      onkeydown="if(event.key==='Enter') enviar()"
+    >
+    <button onclick="enviar()">Enviar</button>
+  </div>
+
+</div>
+
 <script>
+
 async function enviar() {
+
   const input = document.getElementById("input");
   const messages = document.getElementById("messages");
+
   const mensaje = input.value.trim();
 
   if (!mensaje) return;
 
-  messages.innerHTML += `<div class="message user">${mensaje}</div>`;
+  messages.innerHTML += `
+    <div class="message user">${mensaje}</div>
+  `;
+
   input.value = "";
+
   messages.scrollTop = messages.scrollHeight;
 
-  messages.innerHTML += `<div class="message bot" id="loading">Escribiendo...</div>`;
-  messages.scrollTop = messages.scrollHeight;
+  messages.innerHTML += `
+    <div class="message bot" id="loading">
+      Escribiendo...
+    </div>
+  `;
 
   const res = await fetch("/chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ message: mensaje })
+    body: JSON.stringify({
+      message: mensaje
+    })
   });
 
   const data = await res.json();
 
   document.getElementById("loading").remove();
-  messages.innerHTML += `<div class="message bot">${data.reply}</div>`;
+
+  messages.innerHTML += `
+    <div class="message bot">${data.reply}</div>
+  `;
+
   messages.scrollTop = messages.scrollHeight;
 }
+
 </script>
 
 </body>
