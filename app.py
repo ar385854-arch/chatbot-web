@@ -10,29 +10,33 @@ CORS(app)
 
 client = OpenAI()
 
-RESERVAS_FILE = "citas.csv"
+RESERVAS_FILE="citas.csv"
 
-historial = [
-    {
-        "role": "system",
-        "content": """
-Eres un asistente profesional para gestionar citas en consultas, clínicas, dentistas, psicólogos y otros negocios de servicios.
 
-Tu trabajo es recoger solicitudes de cita de forma clara y amable.
+def crear_historial():
 
-Datos a recoger:
+    return [
+
+        {
+
+            "role":"system",
+
+            "content":"""
+
+Eres un asistente profesional para gestionar citas en consultas, clínicas, dentistas y psicólogos.
+
+Tu trabajo es recoger:
+
 - Nombre
-- Motivo de la cita o servicio que necesita
-- Día preferido
-- Hora preferida
-- Teléfono de contacto
+- Motivo de la cita
+- Día
+- Hora
+- Teléfono
 
+NO hables de restaurantes.
 NO preguntes cuántas personas son.
-NO hables de restaurante.
-NO digas reserva de mesa.
-NO digas que el restaurante revisará disponibilidad.
 
-Cuando tengas todos los datos, responde exactamente con este formato:
+Cuando tengas todos los datos responde EXACTAMENTE:
 
 Perfecto, he tomado tu solicitud de cita.
 
@@ -44,84 +48,250 @@ Teléfono: ...
 
 El negocio revisará disponibilidad y te contactará en breve para confirmarla.
 
-Sé breve, amable y profesional.
 """
-    }
-]
+
+        }
+
+    ]
 
 
 def guardar_cita(texto):
+
     if "Perfecto, he tomado tu solicitud de cita." not in texto:
         return
 
-    existe = os.path.exists(RESERVAS_FILE)
+    existe=os.path.exists(
+        RESERVAS_FILE
+    )
 
-    with open(RESERVAS_FILE, "a", newline="", encoding="utf-8") as archivo:
-        writer = csv.writer(archivo)
+    with open(
+        RESERVAS_FILE,
+        "a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        writer=csv.writer(
+            archivo
+        )
 
         if not existe:
-            writer.writerow(["fecha_registro", "estado", "texto"])
+
+            writer.writerow([
+
+                "fecha_registro",
+                "estado",
+                "texto"
+
+            ])
 
         writer.writerow([
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+
             "pendiente",
+
             texto
+
         ])
+
 
 
 @app.route("/")
 def home():
-    return send_file("index.html")
 
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    data = request.get_json()
-    mensaje = data.get("message", "")
-
-    historial.append({"role": "user", "content": mensaje})
-
-    respuesta = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=historial
+    return send_file(
+        "index.html"
     )
 
-    reply = respuesta.choices[0].message.content
 
-    historial.append({"role": "assistant", "content": reply})
+@app.route(
+    "/chat",
+    methods=["POST"]
+)
 
-    guardar_cita(reply)
+def chat():
 
-    return jsonify({"reply": reply})
+    data=request.get_json()
+
+    mensaje=data.get(
+        "message",
+        ""
+    )
+
+    historial=crear_historial()
+
+    historial.append({
+
+        "role":"user",
+        "content":mensaje
+
+    })
+
+    respuesta=client.chat.completions.create(
+
+        model="gpt-4o-mini",
+
+        messages=historial
+
+    )
+
+    reply=respuesta.choices[0].message.content
+
+    guardar_cita(
+        reply
+    )
+
+    return jsonify({
+
+        "reply":reply
+
+    })
 
 
 @app.route("/reservas")
 def ver_reservas():
-    if not os.path.exists(RESERVAS_FILE):
-        return "<h1>Citas recibidas</h1><p>No hay citas todavía.</p>"
 
-    html = """
+    if not os.path.exists(
+        RESERVAS_FILE
+    ):
+
+        return """
+
+        <h1>Citas recibidas</h1>
+        <p>No hay citas todavía.</p>
+
+        """
+
+    html="""
+
     <h1>Citas recibidas</h1>
+
     <style>
-      body { font-family: Arial; padding: 30px; }
-      .cita { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 10px; }
-      .pendiente { color: orange; font-weight: bold; }
+
+    body{
+
+    font-family:Arial;
+    padding:30px;
+
+    }
+
+    .cita{
+
+    border:1px solid #ccc;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:20px;
+
+    }
+
+    .pendiente{
+
+    color:orange;
+    font-weight:bold;
+
+    }
+
+    button{
+
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    margin-right:10px;
+    cursor:pointer;
+
+    }
+
     </style>
+
     """
 
-    with open(RESERVAS_FILE, "r", encoding="utf-8") as archivo:
-        reader = csv.DictReader(archivo)
+
+    with open(
+        RESERVAS_FILE,
+        "r",
+        encoding="utf-8"
+    ) as archivo:
+
+        reader=csv.DictReader(
+            archivo
+        )
 
         for fila in reader:
+
+            telefono=""
+
+            for linea in fila[
+                "texto"
+            ].split("\n"):
+
+                if "Teléfono:" in linea:
+
+                    telefono=linea.replace(
+                        "Teléfono:",
+                        ""
+                    ).strip()
+
+            aceptar=f"https://wa.me/34{telefono}?text=Hola,%20tu%20cita%20ha%20sido%20confirmada%20✅"
+
+            rechazar=f"https://wa.me/34{telefono}?text=Hola,%20lo%20sentimos,%20ahora%20mismo%20no%20tenemos%20disponibilidad."
+
+
             html += f"""
+
             <div class="cita">
-              <p><strong>Estado:</strong> <span class="pendiente">{fila['estado']}</span></p>
-              <pre>{fila['texto']}</pre>
+
+            <p>
+
+            <strong>Estado:</strong>
+
+            <span class="pendiente">
+
+            {fila['estado']}
+
+            </span>
+
+            </p>
+
+            <pre>
+
+{fila['texto']}
+
+            </pre>
+
+            <br><br>
+
+            <a href="{aceptar}" target="_blank">
+
+            <button>
+
+            ✅ Aceptar WhatsApp
+
+            </button>
+
+            </a>
+
+            <a href="{rechazar}" target="_blank">
+
+            <button>
+
+            ❌ Rechazar WhatsApp
+
+            </button>
+
+            </a>
+
             </div>
+
             """
 
     return html
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__=="__main__":
+
+    app.run(
+        debug=True
+    )
